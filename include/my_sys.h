@@ -495,6 +495,17 @@ typedef struct st_io_cache		/* Used when cacheing files */
   my_off_t aio_read_pos;
   my_aio_result aio_result;
 #endif
+  /*
+    An offset for read caches that intend to access
+    associated files lock-free way and concurrently with possible
+    writers. The cache's buffer must not contain bytes beyond this margin, at where
+    reading must return as if the physical eof is reached.
+    The zero value designates the cache is ordinary so reading into its
+    buffer is constrained "as usual" only by the buffer size.
+    Non-zero value -  typically produced by a file writer and assigned before attempting to
+    read the file - affects decision of how many bytes to pump into the buffer.
+  */
+  my_off_t end_of_read;
 } IO_CACHE;
 
 typedef int (*qsort2_cmp)(const void *, const void *, const void *);

@@ -312,6 +312,7 @@ int init_io_cache(IO_CACHE *info, File file, size_t cachesize,
 
   /* End_of_file may be changed by user later */
   info->end_of_file= end_of_file;
+  info->end_of_read= 0;
   info->error=0;
   info->type= type;
   init_functions(info);
@@ -648,10 +649,12 @@ int _my_b_cache_read(IO_CACHE *info, uchar *Buffer, size_t Count)
     within a block already. So we will reach new alignment.
   */
   max_length= info->read_length-diff_length;
-  /* We will not read past end of file. */
+  /* We will not read past end of file or the end-of-read marker when set. */
   if (info->type != READ_FIFO &&
-      max_length > (info->end_of_file - pos_in_file))
-    max_length= (size_t) (info->end_of_file - pos_in_file);
+      max_length > ((info->end_of_read > 0 ?
+                     info->end_of_read : info->end_of_file) - pos_in_file))
+       max_length= (size_t) ((info->end_of_read > 0 ? info->end_of_read :
+                              info->end_of_file) - pos_in_file);
   /*
     If there is nothing left to read,
       we either are done, or we failed to fulfill the request.
